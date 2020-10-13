@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+// option go_package = "github.com/vitalyo61/atlant/grpc";
+
+package grpc;
+
+service Product {
+  rpc Fetch (FetchRequest) returns (FetchResponce) {}
+  rpc List (ListRequest) returns (ListResponce) {}
+}
+
+message FetchRequest {
+  string url = 1;
+}
+
+message FetchResponce {
+  string error = 1;
+}
+
+message Paging {
+  int64 skip = 1;
+  int64 limit = 2;
+}
+
+message Sorting {
+  string field = 1;
+
+  enum SortType {
+    DESC = 0;
+    ASC = 1;
+  }
+}
+
+message ListRequest {
+  Paging paging = 1;
+  Sorting sorting = 2;
+}
+
+message ListResponce {
+  string product = 1;
+  string price = 2;
+  int32 count = 3;
+  int64 timestamp = 4;
+  string error = 5;
+}

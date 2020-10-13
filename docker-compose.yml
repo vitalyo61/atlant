@@ -1,0 +1,10 @@
+version: "3.3"
+
+services:
+
+  mongo:
+    image: mongo
+    command: --serviceExecutor adaptive
+    # restart: always
+    ports:
+      - "30000:27017"
