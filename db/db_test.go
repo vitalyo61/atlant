@@ -38,6 +38,9 @@ func TestDB(t *testing.T) {
 	for p, prs := range products {
 		for _, pr := range prs {
 			err = ProductUpdate(db, p, pr)
+			if !assert.NoError(t, err) {
+				return
+			}
 		}
 	}
 
@@ -62,6 +65,54 @@ func TestDB(t *testing.T) {
 		prs := products[result.Name]
 		assert.Equal(t, int(result.Count), len(prs))
 		assert.Equal(t, result.Price.String(), prs[len(prs)-1])
+	}
+
+	productsBulk := []*ProductForUpdate{
+		&ProductForUpdate{
+			Name:  "a",
+			Price: "10.40",
+		},
+		&ProductForUpdate{
+			Name:  "b",
+			Price: "20.50",
+		},
+		&ProductForUpdate{
+			Name:  "c",
+			Price: "30.20",
+		},
+	}
+
+	err = ProductsUpdate(db, productsBulk)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	ctx, cancel = context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+
+	cur, err = db.Product.Find(ctx, bson.D{})
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	defer cur.Close(ctx)
+
+	var count int
+
+	for cur.Next(ctx) {
+		var result Product
+		err := cur.Decode(&result)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		t.Logf("%+v", result)
+		pr := productsBulk[count]
+		prs := products[pr.Name]
+		assert.Equal(t, int(result.Count), len(prs)+1)
+		assert.Equal(t, result.Price.String(), pr.Price)
+
+		count++
 	}
 
 }

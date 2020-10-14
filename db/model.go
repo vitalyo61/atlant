@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -68,6 +69,41 @@ type Product struct {
 	Price     primitive.Decimal128 `bson:"price"`
 	Count     int32                `bson:"count"`
 	Timestamp time.Time            `bson:"date"`
+}
+
+type ProductForUpdate struct {
+	Name, Price string
+}
+
+func ProductsUpdate(db *Database, products []*ProductForUpdate) error {
+	models := make([]mongo.WriteModel, 0)
+	var (
+		err error
+		d   primitive.Decimal128
+	)
+
+	for _, p := range products {
+		if d, err = primitive.ParseDecimal128(p.Price); err != nil {
+			log.Printf("Error parse price for '%s': %s\n", p.Name, err)
+			continue
+		}
+
+		models = append(models,
+			mongo.NewUpdateOneModel().
+				SetFilter(bson.M{"_id": p.Name}).
+				SetUpdate(bson.M{
+					"$set": bson.M{"price": d, "date": time.Now()},
+					"$inc": bson.M{"count": 1},
+				}).SetUpsert(true))
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+
+	_, err = db.Product.BulkWrite(ctx, models, opts)
+
+	return err
 }
 
 func ProductUpdate(db *Database, name, price string) error {
