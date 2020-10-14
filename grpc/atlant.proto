@@ -1,8 +1,10 @@
 syntax = "proto3";
 
-// option go_package = "github.com/vitalyo61/atlant/grpc";
+option go_package = "github.com/vitalyo61/atlant/grpc";
 
 package grpc;
+
+import "google/protobuf/timestamp.proto";
 
 service Product {
   rpc Fetch (FetchRequest) returns (FetchResponce) {}
@@ -14,7 +16,7 @@ message FetchRequest {
 }
 
 message FetchResponce {
-  string error = 1;
+  // string error = 1;
 }
 
 message Paging {
@@ -23,12 +25,20 @@ message Paging {
 }
 
 message Sorting {
-  string field = 1;
+  enum Field {
+    NAME = 0;
+    PRICE = 1;
+    COUNT = 2;
+    TIMESTAMP = 3;
+  }
 
-  enum SortType {
+  enum Type {
     DESC = 0;
     ASC = 1;
   }
+  
+  Field field = 1;
+  Type type = 2;
 }
 
 message ListRequest {
@@ -37,9 +47,13 @@ message ListRequest {
 }
 
 message ListResponce {
-  string product = 1;
-  string price = 2;
-  int32 count = 3;
-  int64 timestamp = 4;
-  string error = 5;
+
+  message Product {
+    string name = 1;
+    string price = 2;
+    int32 count = 3;
+    google.protobuf.Timestamp last_update = 4;
+  }
+
+  repeated Product products = 1;
 }

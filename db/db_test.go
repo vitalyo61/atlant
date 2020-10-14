@@ -16,10 +16,10 @@ func TestDB(t *testing.T) {
 		Name:    "atlant",
 		Timeout: 5,
 	})
-
 	if !assert.NoError(t, err) {
 		return
 	}
+
 	defer func() {
 		err = db.Close()
 		assert.NoError(t, err)
