@@ -126,3 +126,27 @@ func ProductUpdate(db *Database, name, price string) error {
 
 	return err
 }
+
+func ProductsList(db *Database, limit, skip int64, sort string, order int) ([]*Product, error) {
+	if sort == "name" {
+		sort = "_id"
+	}
+	opts := options.Find().
+		SetLimit(limit).
+		SetSkip(skip).
+		SetSort(bson.D{{sort, order}})
+
+	products := make([]*Product, 0)
+
+	ctx, cancelF := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancelF()
+	cursor, err := db.Product.Find(ctx, bson.D{}, opts)
+	if err != nil {
+		return products, err
+	}
+
+	ctx, cancelC := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancelC()
+	err = cursor.All(ctx, &products)
+	return products, err
+}

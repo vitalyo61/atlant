@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,25 +62,19 @@ func TestDB(t *testing.T) {
 			return
 		}
 
-		t.Logf("%+v", result)
 		prs := products[result.Name]
 		assert.Equal(t, int(result.Count), len(prs))
 		assert.Equal(t, result.Price.String(), prs[len(prs)-1])
 	}
 
-	productsBulk := []*ProductForUpdate{
-		&ProductForUpdate{
-			Name:  "a",
-			Price: "10.40",
-		},
-		&ProductForUpdate{
-			Name:  "b",
-			Price: "20.50",
-		},
-		&ProductForUpdate{
-			Name:  "c",
-			Price: "30.20",
-		},
+	productsBulk := make([]*ProductForUpdate, 0)
+
+	for i := 97; i <= 122; i++ {
+		productsBulk = append(productsBulk,
+			&ProductForUpdate{
+				Name:  fmt.Sprintf("%c", i),
+				Price: fmt.Sprintf("%d.00", 123-i),
+			})
 	}
 
 	err = ProductsUpdate(db, productsBulk)
@@ -87,32 +82,42 @@ func TestDB(t *testing.T) {
 		return
 	}
 
-	ctx, cancel = context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-
-	cur, err = db.Product.Find(ctx, bson.D{})
+	productsList, err := ProductsList(db, 4, 0, "name", 1)
 	if !assert.NoError(t, err) {
 		return
 	}
 
-	defer cur.Close(ctx)
-
-	var count int
-
-	for cur.Next(ctx) {
-		var result Product
-		err := cur.Decode(&result)
-		if !assert.NoError(t, err) {
-			return
-		}
-
-		t.Logf("%+v", result)
-		pr := productsBulk[count]
-		prs := products[pr.Name]
-		assert.Equal(t, int(result.Count), len(prs)+1)
-		assert.Equal(t, result.Price.String(), pr.Price)
-
-		count++
+	for i, p := range productsList {
+		assert.Equal(t, p.Name, fmt.Sprintf("%c", i+97))
+		assert.Equal(t, p.Count, int32(4-i))
+		assert.Equal(t, p.Price.String(), fmt.Sprintf("%d.00", 26-i))
 	}
 
+	productsList, err = ProductsList(db, 4, 4, "name", 1)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	for i, p := range productsList {
+		assert.Equal(t, p.Name, fmt.Sprintf("%c", i+97+4))
+		assert.Equal(t, p.Price.String(), fmt.Sprintf("%d.00", 26-i-4))
+	}
+
+	productsList, err = ProductsList(db, 4, 0, "price", -1)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	for i, p := range productsList {
+		assert.Equal(t, p.Price.String(), fmt.Sprintf("%d.00", 26-i))
+	}
+
+	productsList, err = ProductsList(db, 4, 0, "price", 1)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	for i, p := range productsList {
+		assert.Equal(t, p.Price.String(), fmt.Sprintf("%d.00", i+1))
+	}
 }
