@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,8 +12,13 @@ import (
 )
 
 func TestDB(t *testing.T) {
+	address := os.Getenv("MONGO")
+	if address == "" {
+		address = "mongodb://localhost:27017"
+	}
+
 	db, err := New(&config.DB{
-		Address: "mongodb://localhost:30000",
+		Address: address,
 		Name:    "atlant",
 		Timeout: 5,
 	})
@@ -91,6 +97,7 @@ func TestDB(t *testing.T) {
 		assert.Equal(t, p.Name, fmt.Sprintf("%c", i+97))
 		assert.Equal(t, p.Count, int32(4-i))
 		assert.Equal(t, p.Price.String(), fmt.Sprintf("%d.00", 26-i))
+		t.Logf("%+v", p)
 	}
 
 	productsList, err = ProductsList(db, 4, 4, "name", 1)

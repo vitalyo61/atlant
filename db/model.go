@@ -92,8 +92,9 @@ func ProductsUpdate(db *Database, products []*ProductForUpdate) error {
 			mongo.NewUpdateOneModel().
 				SetFilter(bson.M{"_id": p.Name}).
 				SetUpdate(bson.M{
-					"$set": bson.M{"price": d, "date": time.Now()},
-					"$inc": bson.M{"count": 1},
+					"$currentDate": bson.M{"date": bson.M{"$type": "timestamp"}},
+					"$set":         bson.M{"price": d},
+					"$inc":         bson.M{"count": 1},
 				}).SetUpsert(true))
 	}
 
@@ -115,8 +116,9 @@ func ProductUpdate(db *Database, name, price string) error {
 	opts := options.Update().SetUpsert(true)
 	filter := bson.M{"_id": name}
 	update := bson.M{
-		"$set": bson.M{"price": d, "date": time.Now()},
-		"$inc": bson.M{"count": 1},
+		"$currentDate": bson.M{"date": bson.M{"$type": "timestamp"}},
+		"$set":         bson.M{"price": d},
+		"$inc":         bson.M{"count": 1},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)

@@ -1,10 +1,74 @@
-version: "3.3"
+version: "3.6"
+
+networks:
+  grps-net:
+    driver: bridge
 
 services:
-
   mongo:
     image: mongo
     command: --serviceExecutor adaptive
-    # restart: always
+    networks:
+      - grps-net
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile-test
+    depends_on:
+      - mongo
+    environment:
+      - MONGO=mongodb://mongo:27017
+    networks:
+      - grps-net
+
+  server1:
+    build:
+      context: .
+      dockerfile: Dockerfile-int
+    depends_on:
+      - mongo
+    networks:
+      - grps-net
+
+  server2:
+    image: atlant_server1
     ports:
-      - "30000:27017"
+      - 50051:50051
+    depends_on:
+      - mongo
+      - server1
+    networks:
+      - grps-net
+
+  proxy:
+    image: nginx
+    depends_on:
+      - server1
+      - server2
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./:/var/log/nginx
+    networks:
+      - grps-net
+
+  tests_int:
+    build:
+      context: .
+      dockerfile: Dockerfile-test-int
+    depends_on:
+      - csv
+    environment:
+      - GPRS_SERVER=proxy:50051
+      - CSV_URL=csv:8080
+    networks:
+      - grps-net
+
+  csv:
+    build:
+      context: .
+      dockerfile: Dockerfile-csv
+    environment:
+      - CSV_PORT=8080
+    networks:
+      - grps-net

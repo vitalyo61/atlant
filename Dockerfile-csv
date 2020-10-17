@@ -1,0 +1,11 @@
+FROM golang:alpine
+
+RUN apk add --no-cache make curl gcc libc-dev
+
+WORKDIR /app
+
+COPY ./test/* ./
+
+WORKDIR /app
+
+CMD go run csv.go

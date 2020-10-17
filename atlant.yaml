@@ -1,0 +1,6 @@
+database:
+  address: mongodb://mongo:27017
+  database: atlant
+  timeout: 5
+grpc:
+  port: 50051

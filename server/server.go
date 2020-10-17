@@ -27,8 +27,11 @@ func NewServer(db *db.Database) *Server {
 func (s *Server) Fetch(ctx context.Context, req *pb.FetchRequest) (*pb.FetchResponce, error) {
 	resp := new(pb.FetchResponce)
 
+	log.Printf("Fetch request: %+v\n", req)
+
 	r, err := http.Get(req.Url)
 	if err != nil {
+		log.Printf("GET error: %s\n", err)
 		return resp, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
@@ -68,6 +71,8 @@ func (s *Server) Fetch(ctx context.Context, req *pb.FetchRequest) (*pb.FetchResp
 func (s *Server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponce, error) {
 	resp := new(pb.ListResponce)
 
+	log.Printf("List request: %+v\n", req)
+
 	var (
 		limit, skip int64
 	)
@@ -93,8 +98,6 @@ func (s *Server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponc
 			order = -1
 		}
 	}
-
-	log.Println(limit, skip, sort, order)
 
 	productsList, err := db.ProductsList(s.db, limit, skip, sort, order)
 	if err != nil {

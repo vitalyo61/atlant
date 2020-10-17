@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,9 +14,14 @@ import (
 	pb "github.com/vitalyo61/atlant/grpc"
 )
 
-func TestFetch(t *testing.T) {
+func TestServer(t *testing.T) {
+	address := os.Getenv("MONGO")
+	if address == "" {
+		address = "mongodb://localhost:27017"
+	}
+
 	dbase, err := db.New(&config.DB{
-		Address: "mongodb://localhost:30000",
+		Address: address,
 		Name:    "atlant",
 		Timeout: 5,
 	})
